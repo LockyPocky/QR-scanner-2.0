@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>QR сканер с кнопкой</title>
+<title>QR сканер позиции и участника</title>
 <script src="https://unpkg.com/html5-qrcode@2.3.7/minified/html5-qrcode.min.js"></script>
 <style>
   body { font-family: Arial; text-align: center; padding: 10px; }
   #reader { width: 100%; max-width: 400px; margin: 10px auto; }
   .info { margin-top: 10px; font-size: 16px; }
   #result { margin-top: 10px; color: green; }
-  button { font-size: 16px; padding: 10px 15px; margin-top: 10px; }
+  button { font-size: 16px; padding: 10px 15px; margin-top: 10px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -32,44 +32,39 @@ let targetCell = null;
 let participantId = null;
 let data = [];
 
-document.getElementById("startBtn").addEventListener("click", async () => {
-  // Инициализация сканера только после клика
+// Обработчик кнопки "Начать сканирование"
+document.getElementById("startBtn").addEventListener("click", () => {
   if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
 
-  try {
-    // Запрашиваем разрешение на камеру
-    await navigator.mediaDevices.getUserMedia({ video: true });
+  html5QrCode.start(
+    { facingMode: "environment" }, // задняя камера
+    { fps: 10, qrbox: 250 },
+    qrCodeMessage => {
+      if (!targetCell) {
+        targetCell = qrCodeMessage;
+        document.getElementById("targetCell").innerText = targetCell;
+      } else if (!participantId) {
+        participantId = qrCodeMessage;
+        document.getElementById("participantId").innerText = participantId;
 
-    html5QrCode.start(
-      { facingMode: "environment" },
-      { fps: 10, qrbox: 250 },
-      qrCodeMessage => {
-        if (!targetCell) {
-          targetCell = qrCodeMessage;
-          document.getElementById("targetCell").innerText = targetCell;
-        } else if (!participantId) {
-          participantId = qrCodeMessage;
-          document.getElementById("participantId").innerText = participantId;
+        // Сохраняем данные
+        data.push({ cell: targetCell, participant: participantId });
+        document.getElementById("result").innerText = `Сохранено: ${targetCell} → ${participantId}`;
 
-          // Сохраняем данные
-          data.push({ cell: targetCell, participant: participantId });
-          document.getElementById("result").innerText = `Сохранено: ${targetCell} → ${participantId}`;
-
-          // Сбрасываем для следующего сканирования
-          targetCell = null;
-          participantId = null;
-          document.getElementById("targetCell").innerText = "";
-          document.getElementById("participantId").innerText = "";
-        }
-      },
-      errorMessage => { console.log("QR ошибка:", errorMessage); }
-    );
-  } catch (err) {
-    alert("Ошибка доступа к камере: " + err);
-  }
+        // Сброс для следующего сканирования
+        targetCell = null;
+        participantId = null;
+        document.getElementById("targetCell").innerText = "";
+        document.getElementById("participantId").innerText = "";
+      }
+    },
+    errorMessage => { console.log("QR ошибка:", errorMessage); }
+  ).catch(err => {
+    alert("Ошибка запуска камеры: " + err);
+  });
 });
 
-// Скачать CSV
+// Кнопка для скачивания CSV
 document.getElementById("downloadBtn").addEventListener("click", () => {
   if (data.length === 0) { alert("Нет данных для экспорта"); return; }
   let csvContent = "data:text/csv;charset=utf-8,Cell,Participant\n";
