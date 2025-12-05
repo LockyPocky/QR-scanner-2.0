@@ -7,7 +7,7 @@
 <script src="https://unpkg.com/html5-qrcode@2.3.7/minified/html5-qrcode.min.js"></script>
 <style>
   body { font-family: Arial; text-align: center; padding: 10px; }
-  #reader { width: 100%; max-width: 400px; margin: 10px auto; }
+  #reader { width: 100%; max-width: 400px; margin: 10px auto; height: 300px; border: 1px solid #ccc; }
   .info { margin-top: 10px; font-size: 16px; }
   #result { margin-top: 10px; color: green; }
   button { font-size: 16px; padding: 10px 15px; margin-top: 10px; cursor: pointer; }
@@ -27,14 +27,13 @@
 <div id="result"></div>
 
 <script>
-let html5QrCode = null;
 let targetCell = null;
 let participantId = null;
 let data = [];
 
-// Обработчик кнопки "Начать сканирование"
+// Кнопка запуска сканера
 document.getElementById("startBtn").addEventListener("click", () => {
-  if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+  const html5QrCode = new Html5Qrcode("reader"); // создаём внутри клика
 
   html5QrCode.start(
     { facingMode: "environment" }, // задняя камера
@@ -59,9 +58,7 @@ document.getElementById("startBtn").addEventListener("click", () => {
       }
     },
     errorMessage => { console.log("QR ошибка:", errorMessage); }
-  ).catch(err => {
-    alert("Ошибка запуска камеры: " + err);
-  });
+  ).catch(err => alert("Ошибка запуска камеры: " + err));
 });
 
 // Кнопка для скачивания CSV
